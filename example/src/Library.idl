@@ -1,0 +1,8 @@
+
+
+interface Vhcd
+{
+	void Vhcd();
+	void AddPoint(float x);
+	void Dispose();
+};
