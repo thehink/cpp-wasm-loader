@@ -97,7 +97,7 @@ module.exports = function(source) {
                 ${glueContent}
 
                 module['exports'] = ((config) => {
-                    return () => Library(config);
+                    return () => ${packageName}(config);
                 })(${JSON.stringify(Module)});
             `;
                 return callback(null, glue);
