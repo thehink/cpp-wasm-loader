@@ -16,3 +16,5 @@ glue.cpp
 glue.js
 parser.out
 WebIDLGrammar.pkl
+target
+.vscode

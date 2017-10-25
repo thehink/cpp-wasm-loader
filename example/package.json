@@ -6,10 +6,12 @@
   "author": "thehink <benja280@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "build": "webpack --progress"
+    "build": "webpack --progress",
+    "serve": "http-server"
   },
   "dependencies": {
     "cpp-wasm-loader": "../",
+    "http-server": "^0.10.0",
     "webpack": "^3.8.1"
   }
 }

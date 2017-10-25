@@ -1,4 +1,6 @@
 
 import Library from './Library.cpp';
 
-console.log(Library);
+Library().then(function (instance) {
+    console.log(instance);
+ });

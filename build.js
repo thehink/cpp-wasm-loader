@@ -1,4 +1,5 @@
 const { spawn, exec, execSync } = require('child_process');
+const path = require('path');
 
 const emscripten = process.env.EMSCRIPTEN;
 
@@ -82,6 +83,9 @@ function build(config, callback) {
 
     let output = `${config.path}/${config.output}`;
 
+    console.log('=====OUTPUT====');
+    console.log(output);
+
     let count = 0;
 
     let outfiles = [];
@@ -90,7 +94,10 @@ function build(config, callback) {
 
         let infile = entry.input;
 
-        let filename = entry.input.replace(/^.*[\\\/]/, '').split('.')[0];
+        console.log('=========');
+        console.log(entry.input);
+
+        let filename = path.basename(entry.input, path.extname(entry.input));
         let outfile = `${config.path}/${filename}.bc`;
 
         outfiles.push(outfile);
@@ -123,7 +130,7 @@ function build(config, callback) {
             console.log(stderr);
             
             if(++count === entriesCount){
-                buildC(outfiles, [...flags, '--post-js glue.js'], output, callback);
+                buildC(outfiles, [...flags, ...entry.additionalFlags, `--post-js ${config.glue}`], output, callback);
             }
         });
     });
