@@ -121,8 +121,7 @@ function build(config, callback) {
 
         buildC(infile, [...flags, ...entry.additionalFlags, '-c'], outfile, (error, stdout, stderr) => {
             if(error){
-                console.log('Error', stderr);
-                return;
+                return callback(error, stdout, stderr);
             }
 
             console.log('built', outfile);

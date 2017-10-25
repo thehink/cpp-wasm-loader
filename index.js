@@ -1,4 +1,5 @@
-const child_process = require('child_process');
+
+
 const fs = require('fs');
 const loaderUtils = require('loader-utils');
 const path = require('path');
@@ -65,7 +66,7 @@ module.exports = function(source) {
                 }]
             }, (error, stdout, stderr) => {
                 if (error) {
-                    return callback(error, null, );
+                    return callback(error, null);
                 }
 
                 const wasmFile = fs
@@ -79,10 +80,6 @@ module.exports = function(source) {
                     `${packageName}.wasm`,
                     fs.readFileSync(path.join(outDir, wasmFile))
                 );
-
-                console.log('Build succeded!', wasmFile);
-                console.log(stdout);
-                console.log(stderr);
 
                 const Module = {
                     // Path in the built project to the wasm file
