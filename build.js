@@ -145,7 +145,10 @@ function build(config, callback) {
     const configs = [
         defaultConfig.default, 
         config.wasm ? defaultConfig.wasm : defaultConfig.default,
-        config.config
+        config.config,
+        {
+            EXPORT_NAME: config.name,
+        }
     ];
 
     const useFlags = [
