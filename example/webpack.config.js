@@ -15,6 +15,9 @@ module.exports = {
             loader: 'cpp-wasm-loader',
             options: {
               path: 'build/',
+              includes: [],
+              config: {},
+              flags: [],
             }
           }
         }

@@ -21,12 +21,18 @@ module.exports = function(source) {
         release: false,
         wasm: true,
         asmjs: true,
+        includes: [],
+        config: {},
+        flags: '', 
     }, loaderUtils.getOptions(this));
 
     const {
         release,
         wasm,
         asmjs,
+        includes,
+        config,
+        flags,
     } = opts;
 
     const buildPath = opts.path;
@@ -58,6 +64,9 @@ module.exports = function(source) {
                 wasm: true,
                 release: true,
                 glue: path.join(srcDir, `glue.js`),
+                includes: includes,
+                config: config,
+                flags: flags,
                 entries: [{
                     input: this.resourcePath,
                     additionalFlags: [

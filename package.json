@@ -9,6 +9,7 @@
     "babel-eslint": "^8.0.1",
     "eslint": "^4.9.0",
     "loader-utils": "^1.1.0",
+    "lodash": "^4.17.4",
     "prettier-eslint": "^8.2.1",
     "shelljs": "^0.7.8"
   }

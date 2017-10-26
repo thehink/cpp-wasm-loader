@@ -1,5 +1,6 @@
 const { spawn, exec, execSync } = require('child_process');
 const path = require('path');
+const merge = require('lodash/merge');
 
 const emscripten = process.env.EMSCRIPTEN;
 
@@ -15,19 +16,48 @@ const flags = [
 
 const includes = [];
 
-const config = [
-    'NO_EXIT_RUNTIME=1',
-    'NO_FILESYSTEM=1',
-    'EXPORTED_RUNTIME_METHODS=[]',
-    'NO_EXIT_RUNTIME=1',
-    'MODULARIZE=1',
-    'NO_DYNAMIC_EXECUTION=1',
-    //'ALLOW_MEMORY_GROWTH=1',
-    `TOTAL_MEMORY=${64*1024*1024}`,
-    'INLINING_LIMIT=0',
-    'DOUBLE_MODE=0',
-    'PRECISE_I64_MATH=0',
-];
+const defaultConfig = {
+    default: {
+        NO_EXIT_RUNTIME: true,
+        NO_FILESYSTEM: true,
+        EXPORTED_RUNTIME_METHODS: [],
+        MODULARIZE: true,
+        NO_DYNAMIC_EXECUTION: true,
+        TOTAL_MEMORY: 64*1024*1024,
+        INLINING_LIMIT: false,
+        DOUBLE_MODE: false,
+        PRECISE_I64_MATH: false,
+        EXPORT_NAME: 'Untitled',
+    },
+    debug: {
+
+    },
+    release: {
+
+    },
+    wasm: {
+        WASM: true,
+        BINARYEN_IGNORE_IMPLICIT_TRAPS: true,
+        BINARYEN_TRAP_MODE: 'allow',
+    },
+    asm: {
+        AGGRESSIVE_VARIABLE_ELIMINATION: 1,
+        ELIMINATE_DUPLICATE_FUNCTIONS: 1,
+    }
+};
+
+// const config = [
+//     'NO_EXIT_RUNTIME=1',
+//     'NO_FILESYSTEM=1',
+//     'EXPORTED_RUNTIME_METHODS=[]',
+//     'MODULARIZE=1',
+//     'NO_DYNAMIC_EXECUTION=1',
+//     //'ALLOW_MEMORY_GROWTH=1',
+//     `TOTAL_MEMORY=${64*1024*1024}`,
+//     'INLINING_LIMIT=0',
+//     'DOUBLE_MODE=0',
+//     'PRECISE_I64_MATH=0',
+// ];
 
 // if(debug){
 //     output = `${nameL}.debug.js`;
@@ -45,19 +75,41 @@ const config = [
 //     );
 // }
 
-includes.forEach(include => {
-    flags.push(`-I ${include}`);
-});
-
-config.forEach(include => {
-    flags.push(`-s ${include}`);
-});
-
 function generateIdl(filename, callback, config) {
     const ls = spawn('python', [WEB_IDL, filename, 'glue'], config);
     ls.on('close', (code) => {
         callback(code);
     });
+}
+
+function getValue(value) {
+    if(typeof value === 'boolean'){
+        return value ? '1' : '0';
+    }
+
+    if(typeof value === 'object'){
+        return JSON.stringify(value);
+    }
+
+    if(typeof value === 'string'){
+        return `\\"${value}\\"`;
+    }
+
+    return value;
+}
+
+function compileConfig() {
+    const args = [];
+
+    const newConfig = {};
+
+    Array.from(arguments).filter(item => Boolean(item)).forEach(conf => merge(newConfig, conf));
+
+    Object.keys(newConfig).forEach(key => {
+        args.push(`-s ${key}=${getValue(newConfig[key])}`);
+    });
+
+    return args;
 }
 
 function buildC(input, flags, output, callback) {
@@ -90,6 +142,21 @@ function build(config, callback) {
 
     let outfiles = [];
 
+    const configs = [
+        defaultConfig.default, 
+        config.wasm ? defaultConfig.wasm : defaultConfig.default,
+        config.config
+    ];
+
+    const useFlags = [
+        ...flags,
+        ...compileConfig(...configs),
+    ];
+    
+    config.includes.forEach(include => {
+        useFlags.push(`-I ${include}`);
+    });
+
     entries.forEach(entry => {
 
         let infile = entry.input;
@@ -102,24 +169,7 @@ function build(config, callback) {
 
         outfiles.push(outfile);
 
-        entry.additionalFlags.push(`-s EXPORT_NAME=\\"${config.name}\\"`);
-        
-        if(config.wasm){
-            entry.additionalFlags.push(
-                '-s WASM=1',
-                //'BINARYEN_IMPRECISE=1',
-                '-s BINARYEN_IGNORE_IMPLICIT_TRAPS=1',
-                '-s BINARYEN_TRAP_MODE=\\"allow\\"'
-            );
-        } else {
-            entry.additionalFlags.push(
-                '-s AGGRESSIVE_VARIABLE_ELIMINATION=1',
-                '-s ELIMINATE_DUPLICATE_FUNCTIONS=1'
-            );
-        }
-        
-
-        buildC(infile, [...flags, ...entry.additionalFlags, '-c'], outfile, (error, stdout, stderr) => {
+        buildC(infile, [...useFlags, ...config.flags, '-c'], outfile, (error, stdout, stderr) => {
             if(error){
                 return callback(error, stdout, stderr);
             }
@@ -129,7 +179,7 @@ function build(config, callback) {
             console.log(stderr);
             
             if(++count === entriesCount){
-                buildC(outfiles, [...flags, ...entry.additionalFlags, `--post-js ${config.glue}`], output, callback);
+                buildC(outfiles, [...useFlags, ...config.flags, `--post-js ${config.glue}`], output, callback);
             }
         });
     });
