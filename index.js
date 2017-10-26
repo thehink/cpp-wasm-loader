@@ -93,8 +93,6 @@ module.exports = function(source) {
                 const Module = {
                     // Path in the built project to the wasm file
                     wasmBinaryFile: `${buildPath}${packageName}.wasm`,
-                    // Indicates that we are NOT running in node, despite 'require' being defined
-                    ENVIRONMENT: 'WEB',
                 }
 
                 const glueContent = fs.readFileSync(outFile);
