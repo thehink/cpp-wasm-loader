@@ -21,6 +21,7 @@ module.exports = function(source) {
         release: false,
         wasm: true,
         asmjs: true,
+        target: 'web',
         includes: [],
         config: {},
         flags: '', 
@@ -97,13 +98,22 @@ module.exports = function(source) {
 
                 const glueContent = fs.readFileSync(outFile);
 
-                const glue = `
-                ${glueContent}
+                let glue = `
+                        let cwrap = null;
+        
+                        ${glueContent}
+        
+                        module['exports'] = ((config) => {
+                            return () => ${packageName}(config);
+                        })(${JSON.stringify(Module)});
+                    `;
+        
+                if(opts.target === 'web'){
+                    glue = glue.replace('require("path")', 'undefined')
+                    .replace('require("fs")', 'undefined');
+                }
 
-                module['exports'] = ((config) => {
-                    return () => ${packageName}(config);
-                })(${JSON.stringify(Module)});
-            `;
+
                 return callback(null, glue);
             });
         }
